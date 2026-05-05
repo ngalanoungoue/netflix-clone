@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled,  setScrolled]  = useState(false);
+ // const [menuOpen,  setMenuOpen]  = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -13,29 +14,93 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
-  return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 px-10 py-4 flex items-center
-      justify-between transition-all duration-500 ${scrolled ? 'bg-netflix-dark' : 'bg-transparent'}`}>
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
-      <div className="text-netflix-red text-2xl font-black tracking-widest cursor-pointer"
-        onClick={() => navigate('/browse')}>
+  return (
+    <nav style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0,
+      zIndex: 1000,
+      padding: '0 40px',
+      height: '68px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      background: scrolled
+        ? '#141414'
+        : 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%)',
+      transition: 'background 0.4s ease',
+    }}>
+      {/* Logo */}
+      <div
+        onClick={() => navigate('/browse')}
+        style={{
+          color: '#E50914',
+          fontSize: '1.8rem',
+          fontWeight: 900,
+          letterSpacing: '4px',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}
+      >
         NETFLIX
       </div>
 
-      <div className="hidden md:flex gap-6 text-white text-sm">
-        <span className="cursor-pointer hover:text-gray-300">Accueil</span>
-        <span className="cursor-pointer hover:text-gray-300">Séries</span>
-        <span className="cursor-pointer hover:text-gray-300">Films</span>
+      {/* Liens navigation — cachés sur mobile */}
+      <div style={{
+        display: 'flex',
+        gap: '24px',
+        alignItems: 'center',
+      }}
+        className="nav-links"
+      >
+        {['Accueil', 'Séries', 'Films', 'Nouveautés'].map(item => (
+          <span key={item} style={{
+            color: '#e5e5e5',
+            fontSize: '14px',
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+          }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#e5e5e5')}
+          >
+            {item}
+          </span>
+        ))}
       </div>
 
-      <div className="flex items-center gap-4">
-        <span className="text-gray-300 text-sm hidden md:block">{user?.email}</span>
-        <div className="w-8 h-8 rounded bg-netflix-red flex items-center justify-center text-white font-bold">
+      {/* Profil + déconnexion */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ color: '#e5e5e5', fontSize: '13px' }}>
+          {user?.email?.split('@')[0]}
+        </span>
+        <div style={{
+          width: '32px', height: '32px',
+          borderRadius: '4px',
+          backgroundColor: '#E50914',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 700, fontSize: '14px',
+          cursor: 'pointer',
+          flexShrink: 0,
+        }}>
           {user?.email?.[0]?.toUpperCase()}
         </div>
-        <button onClick={async () => { await logout(); navigate('/login'); }}
-          className="text-white text-sm hover:text-gray-300">
-          Déconnexion
+        <button
+          onClick={handleLogout}
+          style={{
+            backgroundColor: 'transparent',
+            border: '1px solid #fff',
+            color: '#fff',
+            padding: '6px 14px',
+            borderRadius: '4px',
+            fontSize: '13px',
+            cursor: 'pointer',
+          }}
+        >
+          Quitter
         </button>
       </div>
     </nav>
