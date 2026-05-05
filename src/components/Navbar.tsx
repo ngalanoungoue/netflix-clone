@@ -34,6 +34,7 @@ export default function Navbar() {
         : 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%)',
       transition: 'background 0.4s ease',
     }}>
+
       {/* Logo */}
       <div
         onClick={() => navigate('/browse')}
@@ -49,68 +50,83 @@ export default function Navbar() {
         NETFLIX
       </div>
 
-      {/* Liens navigation — cachés sur mobile */}
-      <div style={{
-        display: 'flex',
-        gap: '24px',
-        alignItems: 'center',
-      }}
-        className="nav-links"
-      >
-        {['Accueil', 'Séries', 'Films', 'Nouveautés'].map(item => (
-          <span key={item} style={{
-            color: '#e5e5e5',
-            fontSize: '14px',
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-          }}
+      {/* Liens navigation */}
+      <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+        {[
+          { label: 'Accueil',    path: '/browse' },
+          { label: 'Séries',     path: '/series' },
+          { label: 'Films',      path: '/films' },
+          { label: 'Nouveautés', path: '/nouveautes' },
+        ].map(item => (
+          <span
+            key={item.label}
+            onClick={() => navigate(item.path)}
+            style={{
+              color: '#e5e5e5',
+              fontSize: '14px',
+              cursor: 'pointer',
+              transition: 'color 0.2s',
+            }}
             onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
             onMouseLeave={e => (e.currentTarget.style.color = '#e5e5e5')}
           >
-            {item}
+            {item.label}
           </span>
         ))}
       </div>
 
-      {/* Profil + déconnexion */}
-      <div style={{ position: 'relative' }}>
-  <div
-    onClick={() => setMenuOpen(!menuOpen)}
-    style={{
-      width: '32px', height: '32px', borderRadius: '4px',
-      backgroundColor: '#E50914',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
-    }}>
-    {user?.email?.[0]?.toUpperCase()}
-  </div>
+      {/* Profil */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
+        <span style={{ color: '#e5e5e5', fontSize: '13px' }}>
+          {user?.email?.split('@')[0]}
+        </span>
 
-  {menuOpen && (
-    <div style={{
-      position: 'absolute', top: '40px', right: 0,
-      backgroundColor: '#141414',
-      border: '1px solid #333',
-      borderRadius: '4px',
-      padding: '8px 0',
-      minWidth: '150px',
-      zIndex: 100,
-    }}>
-      <p style={{ color: '#fff', padding: '8px 16px', fontSize: '13px', borderBottom: '1px solid #333' }}>
-        {user?.email}
-      </p>
-      <button
-        onClick={handleLogout}
-        style={{
-          width: '100%', textAlign: 'left',
-          backgroundColor: 'transparent', border: 'none',
-          color: '#fff', padding: '10px 16px',
-          fontSize: '13px', cursor: 'pointer',
-        }}>
-        Déconnexion
-      </button>
-    </div>
-  )}
-</div>
+        <div
+          onClick={() => setMenuOpen(!menuOpen)}
+          style={{
+            width: '32px', height: '32px',
+            borderRadius: '4px',
+            backgroundColor: '#E50914',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 700, fontSize: '14px',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          {user?.email?.[0]?.toUpperCase()}
+        </div>
+
+        {menuOpen && (
+          <div style={{
+            position: 'absolute',
+            top: '40px', right: 0,
+            backgroundColor: '#141414',
+            border: '1px solid #333',
+            borderRadius: '4px',
+            padding: '8px 0',
+            minWidth: '160px',
+            zIndex: 100,
+          }}>
+            <p style={{
+              color: '#aaa', padding: '8px 16px',
+              fontSize: '12px', borderBottom: '1px solid #333',
+            }}>
+              {user?.email}
+            </p>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%', textAlign: 'left',
+                backgroundColor: 'transparent', border: 'none',
+                color: '#fff', padding: '10px 16px',
+                fontSize: '13px', cursor: 'pointer',
+              }}
+            >
+              Déconnexion
+            </button>
+          </div>
+        )}
+      </div>
     </nav>
   );
 }
