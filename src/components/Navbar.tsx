@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const [scrolled,  setScrolled]  = useState(false);
- // const [menuOpen,  setMenuOpen]  = useState(false);
+  const [menuOpen,  setMenuOpen]  = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
@@ -73,36 +73,44 @@ export default function Navbar() {
       </div>
 
       {/* Profil + déconnexion */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ color: '#e5e5e5', fontSize: '13px' }}>
-          {user?.email?.split('@')[0]}
-        </span>
-        <div style={{
-          width: '32px', height: '32px',
-          borderRadius: '4px',
-          backgroundColor: '#E50914',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff', fontWeight: 700, fontSize: '14px',
-          cursor: 'pointer',
-          flexShrink: 0,
+      <div style={{ position: 'relative' }}>
+  <div
+    onClick={() => setMenuOpen(!menuOpen)}
+    style={{
+      width: '32px', height: '32px', borderRadius: '4px',
+      backgroundColor: '#E50914',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+    }}>
+    {user?.email?.[0]?.toUpperCase()}
+  </div>
+
+  {menuOpen && (
+    <div style={{
+      position: 'absolute', top: '40px', right: 0,
+      backgroundColor: '#141414',
+      border: '1px solid #333',
+      borderRadius: '4px',
+      padding: '8px 0',
+      minWidth: '150px',
+      zIndex: 100,
+    }}>
+      <p style={{ color: '#fff', padding: '8px 16px', fontSize: '13px', borderBottom: '1px solid #333' }}>
+        {user?.email}
+      </p>
+      <button
+        onClick={handleLogout}
+        style={{
+          width: '100%', textAlign: 'left',
+          backgroundColor: 'transparent', border: 'none',
+          color: '#fff', padding: '10px 16px',
+          fontSize: '13px', cursor: 'pointer',
         }}>
-          {user?.email?.[0]?.toUpperCase()}
-        </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            backgroundColor: 'transparent',
-            border: '1px solid #fff',
-            color: '#fff',
-            padding: '6px 14px',
-            borderRadius: '4px',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
-        >
-          Quitter
-        </button>
-      </div>
+        Déconnexion
+      </button>
+    </div>
+  )}
+</div>
     </nav>
   );
 }
