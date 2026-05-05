@@ -6,6 +6,8 @@ import Series      from './pages/Series';
 import Films       from './pages/Films';
 import Nouveautes  from './pages/Nouveautes';
 import MovieDetail from './pages/MovieDetail';
+import Search      from './pages/Search';
+import History     from './pages/History';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -21,6 +23,8 @@ function AppRoutes() {
       <Route path="/films"      element={<ProtectedRoute><Films /></ProtectedRoute>} />
       <Route path="/nouveautes" element={<ProtectedRoute><Nouveautes /></ProtectedRoute>} />
       <Route path="/movie/:id"  element={<ProtectedRoute><MovieDetail /></ProtectedRoute>} />
+      <Route path="/search"     element={<ProtectedRoute><Search /></ProtectedRoute>} />
+      <Route path="/history"    element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="*"           element={<Navigate to="/login" />} />
     </Routes>
   );

@@ -25,16 +25,14 @@ export const fixPoster = (url: string): string => {
   return url.replace('http://', 'https://').replace('SX300', 'SX600');
 };
 
-const search = async (query: string, type = 'movie'): Promise<Movie[]> => {
+const searchMovies = async (query: string, type = 'movie'): Promise<Movie[]> => {
   try {
     const res = await axios.get<SearchResult>(BASE_URL, {
       params: { apikey: API_KEY, s: query, type },
     });
     if (res.data.Response === 'True') return res.data.Search;
     return [];
-  } catch {
-    return [];
-  }
+  } catch { return []; }
 };
 
 const getDetails = async (imdbID: string): Promise<Movie | null> => {
@@ -44,18 +42,17 @@ const getDetails = async (imdbID: string): Promise<Movie | null> => {
     });
     if (res.data.Response === 'True') return res.data;
     return null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 };
 
 export const omdbApi = {
-  getTrending:  () => search('avengers'),
-  getAction:    () => search('action hero'),
-  getComedy:    () => search('comedy 2023'),
-  getThriller:  () => search('thriller'),
-  getAnimation: () => search('pixar'),
-  getSeries:    () => search('breaking bad', 'series'),
-  getHero:      () => search('batman'),
+  getTrending:  () => searchMovies('avengers'),
+  getAction:    () => searchMovies('action hero'),
+  getComedy:    () => searchMovies('comedy 2023'),
+  getThriller:  () => searchMovies('thriller'),
+  getAnimation: () => searchMovies('pixar'),
+  getSeries:    () => searchMovies('breaking bad', 'series'),
+  getHero:      () => searchMovies('batman'),
+  search:       (query: string) => searchMovies(query),
   getDetails,
 };
