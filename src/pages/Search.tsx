@@ -5,30 +5,29 @@ import { useSearchHistory } from '../hooks/useSearchHistory';
 import Navbar from '../components/Navbar';
 
 export default function Search() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [query,       setQuery]       = useState('');
+  const [results,     setResults]     = useState<Movie[]>([]);
+  const [loading,     setLoading]     = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { getHistory, addToHistory, removeFromHistory, clearHistory } = useSearchHistory();
 
-  // Initialisation propre de l'historique
+  // ✅ Initialisation propre sans useEffect
   const [history, setHistory] = useState<string[]>(() => getHistory());
 
-  // Focus automatique au chargement
+  // ✅ Focus automatique
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // ✅ Rafraîchir l'historique
   const refreshHistory = useCallback(() => {
     setHistory(getHistory());
   }, [getHistory]);
 
-  // --- LOGIQUE DE RECHERCHE CORRIGÉE ---
+  // ✅ Logique de recherche corrigée — setResults JAMAIS appelé directement dans le body
   useEffect(() => {
-    // Si la requête est vide, on s'arrête là. 
-    // Le nettoyage de 'results' est maintenant géré par handleInputChange.
     if (!query.trim()) return;
 
     let cancelled = false;
@@ -36,11 +35,9 @@ export default function Search() {
       setLoading(true);
       try {
         const res = await omdbApi.search(query);
-        if (!cancelled) {
-          setResults(res);
-        }
+        if (!cancelled) setResults(res);
       } catch (err) {
-        console.error("Erreur recherche:", err);
+        console.error('Erreur recherche:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -52,18 +49,23 @@ export default function Search() {
     };
   }, [query]);
 
-  // Nouvelle fonction pour gérer la saisie proprement
+  // ✅ Gestion saisie — vide les résultats proprement hors du useEffect
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    
-    // CORRECTION : On vide les résultats ici au lieu du useEffect
-    if (!value.trim()) {
-      setResults([]);
-    }
+    if (!value.trim()) setResults([]);
   };
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  // ✅ Sélection depuis l'historique
+  const handleSelectFromHistory = (term: string) => {
+    setQuery(term);
+    setShowHistory(false);
+    addToHistory(term);
+    refreshHistory();
+  };
+
+  // ✅ Soumission formulaire
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       addToHistory(query.trim());
@@ -72,49 +74,122 @@ export default function Search() {
     }
   };
 
-  const handleSelectFromHistory = (term: string) => {
-    setQuery(term);
-    setShowHistory(false);
-    addToHistory(term); // Remonte le terme en haut de l'historique
+  const handleRemove = (term: string) => {
+    removeFromHistory(term);
     refreshHistory();
   };
 
+  const handleClear = () => {
+    clearHistory();
+    setHistory([]);
+  };
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div style={{ backgroundColor: '#141414', minHeight: '100vh' }}>
       <Navbar />
-      
-      <div className="pt-24 px-10 max-w-4xl mx-auto">
-        <form onSubmit={handleSearchSubmit} className="relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={handleInputChange} // Utilisation de la nouvelle fonction
-            onFocus={() => setShowHistory(true)}
-            placeholder="Titres, personnes, genres..."
-            className="w-full bg-gray-800 py-3 px-12 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-white"
-          />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-          
-          {/* Menu Historique */}
-          {showHistory && history.length > 0 && (
-            <div className="absolute w-full bg-gray-900 mt-2 rounded-md shadow-2xl border border-gray-700 z-50">
-              <div className="p-3 flex justify-between text-xs text-gray-400 uppercase font-bold border-b border-gray-800">
-                <span>Recherches récentes</span>
-                <button onClick={clearHistory} className="hover:text-white">Effacer tout</button>
+
+      <div style={{ padding: '90px 20px 40px', maxWidth: '1200px', margin: '0 auto' }}>
+
+        {/* ✅ Barre de recherche responsive */}
+        <form
+          onSubmit={handleSubmit}
+          style={{ position: 'relative', maxWidth: '700px', margin: '0 auto 40px' }}
+        >
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '12px',
+            backgroundColor: '#2a2a2a',
+            border: '2px solid #E50914',
+            borderRadius: '8px',
+            padding: 'clamp(8px, 2vw, 14px) clamp(12px, 3vw, 20px)',
+          }}>
+            <span style={{ color: '#E50914', fontSize: 'clamp(16px, 3vw, 22px)', flexShrink: 0 }}>
+              🔍
+            </span>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Titres, personnes, genres..."
+              value={query}
+              onChange={handleInputChange}
+              onFocus={() => setShowHistory(true)}
+              onBlur={() => setTimeout(() => setShowHistory(false), 200)}
+              style={{
+                flex: 1,
+                backgroundColor: 'transparent',
+                border: 'none', outline: 'none',
+                color: '#fff',
+                fontSize: 'clamp(14px, 3vw, 18px)',
+                minWidth: 0,
+              }}
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
+                style={{
+                  backgroundColor: 'transparent', border: 'none',
+                  color: '#aaa', fontSize: '18px', cursor: 'pointer', flexShrink: 0,
+                }}
+              >✕</button>
+            )}
+          </div>
+
+          {/* ✅ Dropdown historique responsive */}
+          {showHistory && history.length > 0 && !query && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0,
+              backgroundColor: '#1f1f1f',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              zIndex: 200,
+              overflow: 'hidden',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+            }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '10px 16px', borderBottom: '1px solid #333',
+              }}>
+                <span style={{ color: '#aaa', fontSize: '12px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Recherches récentes
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  style={{
+                    backgroundColor: 'transparent', border: 'none',
+                    color: '#E50914', fontSize: '12px', cursor: 'pointer', fontWeight: 600,
+                  }}
+                >Effacer tout</button>
               </div>
-              {history.map((item, index) => (
-                <div 
-                  key={index}
-                  className="flex justify-between items-center px-4 py-2 hover:bg-gray-800 cursor-pointer group"
-                  onClick={() => handleSelectFromHistory(item)}
+
+              {history.map((term, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 16px', borderBottom: '1px solid #222',
+                    cursor: 'pointer', transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#2a2a2a')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
-                  <span className="flex items-center gap-3">
-                    <span className="text-gray-500">🕒</span> {item}
-                  </span>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); removeFromHistory(item); refreshHistory(); }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-500"
+                  <div
+                    onClick={() => handleSelectFromHistory(term)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}
+                  >
+                    <span style={{ color: '#aaa', fontSize: '16px' }}>🕒</span>
+                    <span style={{ color: '#fff', fontSize: '15px' }}>{term}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); handleRemove(term); }}
+                    style={{
+                      backgroundColor: 'transparent', border: 'none',
+                      color: '#555', fontSize: '14px', cursor: 'pointer',
+                      padding: '4px 8px', borderRadius: '4px', transition: 'color 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#E50914')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#555')}
                   >✕</button>
                 </div>
               ))}
@@ -122,30 +197,107 @@ export default function Search() {
           )}
         </form>
 
-        {/* Résultats */}
-        <div className="mt-10">
-          {loading ? (
-            <div className="text-center text-gray-400">Chargement...</div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {results.map((movie) => (
-                <div 
-                  key={movie.imdbID} 
-                  className="cursor-pointer transition hover:scale-105"
-                  onClick={() => navigate(`/movie/${movie.imdbID}`)}
+        {/* ✅ État chargement */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ color: '#E50914', fontSize: '1.5rem', fontWeight: 900, letterSpacing: '4px' }}>
+              Recherche...
+            </div>
+          </div>
+        )}
+
+        {/* ✅ Aucun résultat */}
+        {!loading && query && results.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🎬</div>
+            <p style={{ color: '#fff', fontSize: 'clamp(1rem, 3vw, 1.3rem)', fontWeight: 700 }}>
+              Aucun résultat pour "{query}"
+            </p>
+            <p style={{ color: '#aaa', marginTop: '8px', fontSize: '14px' }}>
+              Essaie un autre titre ou mot-clé
+            </p>
+          </div>
+        )}
+
+        {/* ✅ Page vide — invitation à chercher */}
+        {!query && !loading && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', marginBottom: '16px' }}>🔍</div>
+            <p style={{ color: '#fff', fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', fontWeight: 700 }}>
+              Chercher des films et séries
+            </p>
+            <p style={{ color: '#aaa', marginTop: '8px', fontSize: '14px' }}>
+              Tape le titre d'un film, d'une série ou un genre
+            </p>
+          </div>
+        )}
+
+        {/* ✅ Grille de résultats responsive */}
+        {!loading && results.length > 0 && (
+          <>
+            <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '20px', textAlign: 'center' }}>
+              {results.length} résultat{results.length > 1 ? 's' : ''} pour{' '}
+              <span style={{ color: '#fff', fontWeight: 700 }}>"{query}"</span>
+            </p>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(120px, 18vw, 180px), 1fr))',
+              gap: 'clamp(8px, 2vw, 16px)',
+            }}>
+              {results.filter(m => fixPoster(m.Poster) !== '').map(movie => (
+                <div
+                  key={movie.imdbID}
+                  onClick={() => {
+                    addToHistory(query);
+                    refreshHistory();
+                    navigate(`/movie/${movie.imdbID}`);
+                  }}
+                  style={{
+                    cursor: 'pointer', borderRadius: '6px',
+                    overflow: 'hidden',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    backgroundColor: '#1f1f1f',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.8)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
-                  <img 
-                    src={fixPoster(movie.Poster)} 
-                    alt={movie.Title} 
-                    className="rounded-md w-full aspect-[2/3] object-cover bg-gray-800"
+                  <img
+                    src={fixPoster(movie.Poster)}
+                    alt={movie.Title}
+                    style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block' }}
                   />
-                  <p className="mt-2 text-sm font-medium truncate">{movie.Title}</p>
+                  <div style={{ padding: 'clamp(6px, 2vw, 10px) 8px' }}>
+                    <p style={{
+                      color: '#fff',
+                      fontSize: 'clamp(10px, 2vw, 13px)',
+                      fontWeight: 700,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {movie.Title}
+                    </p>
+                    <p style={{ color: '#aaa', fontSize: 'clamp(9px, 1.5vw, 11px)', marginTop: '4px' }}>
+                      {movie.Year}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
+
+      {/* ✅ CSS responsive mobile injecté */}
+      <style>{`
+        @media (max-width: 480px) {
+          input::placeholder { font-size: 13px; }
+        }
+      `}</style>
     </div>
   );
 }
