@@ -45,6 +45,7 @@ export default function Navbar() {
           { label: 'Séries',     path: '/series' },
           { label: 'Films',      path: '/films' },
           { label: 'Nouveautés', path: '/nouveautes' },
+          { label: '❤️ Favoris', path: '/favorites' },
         ].map(item => (
           <span key={item.label} onClick={() => navigate(item.path)} style={{
             color: '#e5e5e5', fontSize: '14px', cursor: 'pointer', transition: 'color 0.2s',

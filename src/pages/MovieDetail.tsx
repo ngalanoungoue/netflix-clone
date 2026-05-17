@@ -2,13 +2,19 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Movie, omdbApi, fixPoster } from '../services/omdb';
 import Navbar from '../components/Navbar';
-
+import { myApi } from '../services/myApi';
 export default function MovieDetail() {
   const { id }       = useParams<{ id: string }>();
   const navigate     = useNavigate();
   const [movie,      setMovie]     = useState<Movie | null>(null);
   const [playing,    setPlaying]   = useState(false);
   const [trailerId,  setTrailerId] = useState<string | null>(null);
+  const [isFav, setIsFav] = useState(false);
+
+  useEffect(() => {
+  if (!movie) return;
+  myApi.isFavorite(movie.imdbID ?? '').then(setIsFav).catch(() => {});
+}, [movie]);
 
   useEffect(() => {
     if (id) omdbApi.getDetails(id).then(setMovie);
@@ -33,6 +39,28 @@ export default function MovieDetail() {
       <div style={{ color: '#E50914', fontSize: '2rem', fontWeight: 900, letterSpacing: '4px' }}>Chargement...</div>
     </div>
   );
+
+  const handleFavoriteToggle = async () => {
+  if (!movie) return;
+  try {
+    if (isFav) {
+      await myApi.removeFavorite(movie.imdbID ?? '');
+      setIsFav(false);
+    } else {
+      await myApi.addFavorite({
+        imdbId:    movie.imdbID ?? '',
+        title:     movie.Title,
+        posterUrl: movie.Poster,
+        year:      movie.Year,
+        genre:     movie.Genre,
+        imdbRating: movie.imdbRating,
+      });
+      setIsFav(true);
+    }
+  } catch (e) {
+    console.error('Erreur favoris:', e);
+  }
+};
 
   const poster = fixPoster(movie.Poster);
 
@@ -120,6 +148,18 @@ export default function MovieDetail() {
             >
               ← Retour
             </button>
+            <button
+  onClick={handleFavoriteToggle}
+  style={{
+    backgroundColor: isFav ? '#E50914' : 'transparent',
+    border: `2px solid ${isFav ? '#E50914' : '#fff'}`,
+    color: '#fff', borderRadius: '4px',
+    padding: '14px 28px', fontSize: '16px', fontWeight: 700, cursor: 'pointer',
+    transition: 'all 0.2s',
+  }}
+>
+  {isFav ? '❤️ Dans mes favoris' : '🤍 Ajouter aux favoris'}
+</button>
           </div>
         )}
 
