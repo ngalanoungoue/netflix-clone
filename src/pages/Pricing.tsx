@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import Navbar from '../components/Navbar';
 
+
 const PLANS = [
   {
     name: 'Gratuit',
@@ -36,94 +37,81 @@ const PLANS = [
 export default function Pricing() {
   const [currentPlan, setCurrentPlan] = useState('free');
   const [loading, setLoading]         = useState<string | null>(null);
+  const [success, setSuccess]         = useState(false);
   const navigate = useNavigate();
 
-  // ✅ Fix 1 : déclarée AVANT le useEffect avec useCallback
-  const handleSuccess = useCallback(async (sessionId: string) => {
+  const handleSuccess = useCallback(async (planName: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
-    const res = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/stripe/session/${sessionId}`
-    );
-    const data = await res.json();
-
-    if (data.status === 'paid') {
-      const plan = sessionId.includes(import.meta.env.VITE_STRIPE_PREMIUM_PRICE)
-        ? 'premium' : 'standard';
-
-      await supabase.from('subscriptions').upsert({
-        user_id: user.id,
-        plan,
-        status: 'active',
-        updated_at: new Date().toISOString(),
-      });
-      setCurrentPlan(plan);
-      window.history.replaceState({}, '', '/pricing');
-    }
+    await supabase.from('subscriptions').upsert({
+      user_id: user.id,
+      plan: planName,
+      status: 'active',
+      updated_at: new Date().toISOString(),
+    });
+    setCurrentPlan(planName);
+    setSuccess(true);
+    window.history.replaceState({}, '', '/pricing');
   }, []);
 
   useEffect(() => {
-  const fetchSub = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase
-      .from('subscriptions')
-      .select('plan')
-      .eq('user_id', user.id)
-      .single();
-    if (data) setCurrentPlan(data.plan);
-  };
-  fetchSub();
-}, []);
+    const fetchSub = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('plan')
+        .eq('user_id', user.id)
+        .single();
+      if (data) setCurrentPlan(data.plan);
+    };
+    fetchSub();
+  }, []);
 
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get('session_id');
-  if (!sessionId) return;
-
-  const timer = setTimeout(() => {
-    handleSuccess(sessionId);
-  }, 0);
-
-  return () => clearTimeout(timer);
-}, [handleSuccess]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get('plan');
+    if (!plan) return;
+    const timer = setTimeout(() => handleSuccess(plan), 0);
+    return () => clearTimeout(timer);
+  }, [handleSuccess]);
 
   const handleSubscribe = async (priceId: string | null, planName: string) => {
-    if (!priceId) return;
-    setLoading(planName);
+  if (!priceId) return;
+  setLoading(planName);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate('/login'); return; }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { navigate('/login'); return; }
 
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/stripe/create-checkout-session`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            priceId,
-            userId: user.id,
-            successUrl: window.location.origin + '/pricing',
-            cancelUrl:  window.location.origin + '/pricing',
-          }),
-        }
-      );
-      const data = await res.json();
+  try {
+    const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_STRIPE_PUBLIC_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        'mode': 'subscription',
+        'line_items[0][price]': priceId,
+        'line_items[0][quantity]': '1',
+        'success_url': `${window.location.origin}/pricing?plan=${planName.toLowerCase()}`,
+        'cancel_url': `${window.location.origin}/pricing`,
+        'client_reference_id': user.id,
+      }),
+    });
 
-      // ✅ Fix 2 : utilise navigate au lieu de window.location.href
-      if (data.url) {
-        window.open(data.url, '_self');
-      } else {
-        alert('Erreur lors de la création de la session');
-      }
-    } catch {
-      alert('Erreur de connexion au serveur');
-    } finally {
-      setLoading(null);
+    const session = await res.json();
+    if (session.url) {
+      window.open(session.url, '_self');
+    } else {
+      alert('Erreur Stripe : ' + (session.error?.message || 'inconnue'));
     }
-  };
+  } catch {
+    alert('Erreur de connexion à Stripe');
+  } finally {
+    setLoading(null);
+  }
+};
 
   return (
     <div style={{ backgroundColor: '#141414', minHeight: '100vh' }}>
@@ -139,6 +127,18 @@ useEffect(() => {
           </p>
         </div>
 
+        {/* Message succès */}
+        {success && (
+          <div style={{
+            backgroundColor: '#1a2a1a', border: '1px solid #46d369',
+            borderRadius: '8px', padding: '16px', marginBottom: '32px',
+            color: '#46d369', fontWeight: 700, textAlign: 'center', fontSize: '16px',
+          }}>
+            🎉 Abonnement activé avec succès ! Bienvenue sur le plan {currentPlan} !
+          </div>
+        )}
+
+        {/* Grille des plans */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
