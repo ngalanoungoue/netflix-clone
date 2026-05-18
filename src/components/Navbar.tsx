@@ -47,6 +47,7 @@ export default function Navbar() {
           { label: 'Nouveautés', path: '/nouveautes' },
           { label: '❤️ Favoris', path: '/favorites' },
           { label: '👤 Profil', path: '/profile' },
+          { label: '💳 Abonnement', path: '/pricing' },
         ].map(item => (
           <span key={item.label} onClick={() => navigate(item.path)} style={{
             color: '#e5e5e5', fontSize: '14px', cursor: 'pointer', transition: 'color 0.2s',

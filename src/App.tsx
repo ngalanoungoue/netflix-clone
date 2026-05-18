@@ -10,6 +10,7 @@ import Search      from './pages/Search';
 import History     from './pages/History';
 import Favorites from './pages/Favorites';
 import Profile from './pages/Profile';
+import Pricing from './pages/Pricing';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -29,6 +30,7 @@ function AppRoutes() {
       <Route path="/history"    element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/pricing" element={<ProtectedRoute><Pricing /></ProtectedRoute>} />
       <Route path="*"           element={<Navigate to="/login" />} />
     </Routes>
   );

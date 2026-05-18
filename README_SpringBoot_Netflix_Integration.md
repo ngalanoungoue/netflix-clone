@@ -937,9 +937,9 @@ const handleFavoriteToggle = async () => {
 // Bouton à ajouter dans le JSX, après le bouton Retour :
 <button
   onClick={handleFavoriteToggle}
-  style={{
-    backgroundColor: isFav ? '#E50914' : 'transparent',
-    border: `2px solid ${isFav ? '#E50914' : '#fff'}`,
+  style={{'transparent',
+    border: `2px solid ${isFav ? '#E509
+    backgroundColor: isFav ? '#E50914' : 14' : '#fff'}`,
     color: '#fff', borderRadius: '4px',
     padding: '14px 28px', fontSize: '16px', fontWeight: 700, cursor: 'pointer',
     transition: 'all 0.2s',
