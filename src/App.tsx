@@ -9,6 +9,7 @@ import MovieDetail from './pages/MovieDetail';
 import Search      from './pages/Search';
 import History     from './pages/History';
 import Favorites from './pages/Favorites';
+import Profile from './pages/Profile';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ function AppRoutes() {
       <Route path="/search"     element={<ProtectedRoute><Search /></ProtectedRoute>} />
       <Route path="/history"    element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="/favorites" element={<ProtectedRoute><Favorites /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
       <Route path="*"           element={<Navigate to="/login" />} />
     </Routes>
   );
